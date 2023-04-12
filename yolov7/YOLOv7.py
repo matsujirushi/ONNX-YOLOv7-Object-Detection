@@ -8,10 +8,15 @@ from yolov7.utils import xywh2xyxy, nms, draw_detections
 
 class YOLOv7:
 
-    def __init__(self, path, conf_thres=0.7, iou_thres=0.5, official_nms=False):
+    def __init__(self, path, conf_thres=0.7, iou_thres=0.5, official_nms=False, trt=True, cuda=True):
         self.conf_threshold = conf_thres
         self.iou_threshold = iou_thres
         self.official_nms = official_nms
+        self.providers = ['CPUExecutionProvider']
+        if cuda == True:
+            self.providers.insert(0, 'CUDAExecutionProvider')
+        if trt == True:
+            self.providers.insert(0, 'TensorrtExecutionProvider')
 
         # Initialize model
         self.initialize_model(path)
@@ -21,8 +26,7 @@ class YOLOv7:
 
     def initialize_model(self, path):
         self.session = onnxruntime.InferenceSession(path,
-                                                    providers=['CUDAExecutionProvider',
-                                                               'CPUExecutionProvider'])
+                                                    providers=self.providers)
         # Get model info
         self.get_input_details()
         self.get_output_details()
