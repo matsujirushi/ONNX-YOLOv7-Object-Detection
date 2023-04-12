@@ -1,7 +1,10 @@
 import cv2
 from yolov7 import YOLOv7
+from yolov7.utils import class_names
+import numpy as np
 import argparse
 
+person_id = class_names.index('person')
 default_model = 'models/yolov7-tiny_384x640.onnx'
 
 parser = argparse.ArgumentParser()
@@ -55,6 +58,8 @@ while cap.isOpened():
 
     # Update object localizer
     boxes, scores, class_ids = yolov7_detector(frame)
+    if person_id in class_ids:
+        print('- person count: {}'.format(np.bincount(class_ids)[person_id]))
 
     if not headless:
         combined_img = yolov7_detector.draw_detections(frame)
