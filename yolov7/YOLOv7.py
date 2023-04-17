@@ -54,13 +54,15 @@ class YOLOv7:
 
         input_img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
+        dtype = np.float16 if 'float16' in self.output_type else np.float32
+
         # Resize input image
         input_img = cv2.resize(input_img, (self.input_width, self.input_height))
 
         # Scale input pixel values to 0 to 1
         input_img = input_img / 255.0
         input_img = input_img.transpose(2, 0, 1)
-        input_tensor = input_img[np.newaxis, :, :, :].astype(np.float32)
+        input_tensor = input_img[np.newaxis, :, :, :].astype(dtype)
 
         return input_tensor
 
@@ -172,7 +174,7 @@ class YOLOv7:
     def get_output_details(self):
         model_outputs = self.session.get_outputs()
         self.output_names = [model_outputs[i].name for i in range(len(model_outputs))]
-
+        self.output_type = model_outputs[0].type
 
 if __name__ == '__main__':
     from imread_from_url import imread_from_url
