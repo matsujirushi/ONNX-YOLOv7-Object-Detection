@@ -1,4 +1,5 @@
 import cv2
+import time
 from yolov7 import YOLOv7
 from yolov7.utils import class_names
 import numpy as np
@@ -13,6 +14,7 @@ parser.add_argument('--disable-cuda', action='store_true')
 parser.add_argument('--headless', action='store_true')
 parser.add_argument('--model', type=str, default=default_model)
 parser.add_argument('--video', type=str)
+parser.add_argument('--interval-ms', type=int, default=2000)
 args = parser.parse_args()
 
 trt = not args.disable_trt
@@ -20,6 +22,7 @@ cuda = not args.disable_cuda
 headless = args.headless
 model_path = args.model
 video_path = args.video
+interval_ms = args.interval_ms
 print(' - TensorRT: {}'.format('Disable' if args.disable_trt else 'Enable'))
 print(' - CUDA: {}'.format('Disable' if args.disable_cuda else 'Enable'))
 print(' - Headless mode: {}'.format(headless))
@@ -29,11 +32,10 @@ print(' - video: {}'.format('USB Camera' if video_path is None else video_path))
 # # Initialize video
 if video_path is None:
     cap = cv2.VideoCapture(0)
+    cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
 else:
     cap = cv2.VideoCapture(video_path)
 
-start_time = 0  # skip first {start_time} seconds
-cap.set(cv2.CAP_PROP_POS_FRAMES, start_time * 30)
 
 # Initialize YOLOv7 model
 yolov7_detector = YOLOv7(model_path, conf_thres=0.5, iou_thres=0.5, trt=trt, cuda=cuda)
@@ -41,11 +43,21 @@ yolov7_detector = YOLOv7(model_path, conf_thres=0.5, iou_thres=0.5, trt=trt, cud
 if not headless:
     cv2.namedWindow("Detected Objects", cv2.WINDOW_NORMAL)
 
+lap_start = time.perf_counter()
+
 while cap.isOpened():
 
+    wait_ms = interval_ms - int((time.perf_counter() - lap_start) * 1000)
+    if wait_ms <= 0:
+        wait_ms = 1
+
     # Press key q to stop
-    if cv2.waitKey(1) == ord('q'):
+    if cv2.waitKey(wait_ms) == ord('q'):
         break
+    lap_start = time.perf_counter()
+
+    for i in range(int(cap.get(cv2.CAP_PROP_BUFFERSIZE))):
+        cap.grab()
 
     try:
         # Read frame from the video
@@ -64,6 +76,3 @@ while cap.isOpened():
     if not headless:
         combined_img = yolov7_detector.draw_detections(frame)
         cv2.imshow("Detected Objects", combined_img)
-    # out.write(combined_img)
-
-# out.release()
