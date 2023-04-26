@@ -71,7 +71,7 @@ class YOLOv7:
         start = time.perf_counter()
         outputs = self.session.run(self.output_names, {self.input_names[0]: input_tensor})
 
-        print(f"Inference time: {(time.perf_counter() - start)*1000:.2f} ms")
+        print(f"Inference: {time.time()} {time.perf_counter()} {(time.perf_counter() - start)*1000:.2f}")
         return outputs
 
     def process_output(self, output):
