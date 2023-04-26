@@ -8,20 +8,22 @@ import numpy as np
 DEFAULT_MODEL = 'models/yolov7-tiny_384x640.onnx'
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--disable-trt', action='store_true')
-parser.add_argument('--disable-cuda', action='store_true')
+parser.add_argument('--provider', type=str, default='tensorrt')
 parser.add_argument('--model', type=str, default=DEFAULT_MODEL)
 parser.add_argument('--interval-ms', type=int, default=0)
 parser.add_argument('--headless', action='store_true')
 args = parser.parse_args()
 
-print(f' - TensorRT: {"Disable" if args.disable_trt else "Enable"}')
-print(f' - CUDA: {"Disable" if args.disable_cuda else "Enable"}')
+if args.provider not in ['cpu', 'cuda', 'tensorrt']:
+    print('Invalid provider.')
+    exit()
+
+print(f' - provider: {args.provider}')
 print(f' - model: {args.model}')
 print(f' - interval-ms: {args.interval_ms}')
-print(f' - Headless mode: {args.headless}')
+print(f' - headless: {args.headless}')
 
-detector = YOLOv7(args.model, conf_thres=0.5, iou_thres=0.5, trt=not args.disable_trt, cuda=not args.disable_cuda)
+detector = YOLOv7(args.model, conf_thres=0.5, iou_thres=0.5, trt=args.provider == 'tensorrt', cuda=args.provider == 'cuda')
 person_class_id = class_names.index('person')
 
 cap = cv2.VideoCapture(0)
